@@ -1,45 +1,83 @@
 # Laierdavid — Eventgalerie
 
-Kostenlose, rein statische Kundengalerie mit Zugangscode und Download-Funktionen.
-Keine Datenbank, kein Server, keine laufenden Kosten.
+Code-geschützte Kundengalerie für Eventfotos. Reines HTML/CSS/JS,
+kein Server, keine laufenden Kosten.
+
+## Design
+
+Zwei Themes, umschaltbar über den Regler oben rechts (auch auf der
+Code-Seite): dunkel mit Amber-Akzent und hell im Apple-Stil. Beim ersten
+Aufruf richtet sich die Website nach der Systemeinstellung des Geräts.
+Die Wahl landet als `?theme=dark` bzw. `?theme=light` in der Adresszeile.
+Willst du ein Theme erzwingen, hänge das an den Kundenlink an.
 
 ## Dateien
 
 ```
-eventgalerie/
-├── index.html            Code-Eingabe + Galerie + Lightbox
-├── styles.css            Design (dunkel, Amber-Akzent)
-├── app.js                Logik: Code prüfen, Raster, Downloads, ZIP
-├── admin.html            Werkzeug: Galerie anlegen, Vorschaubilder, JSON
-├── data/galleries.json   Alle Events, Codes (als Hash) und Bildlisten
-└── images/               Bearbeitete Bilder + -thumb.jpg Vorschauen
+index.html              Galerie (Codeeingabe, Raster, Lightbox, Downloads)
+styles.css              Design (hell, Apple-Stil)
+app.js                  Logik
+admin.html              Werkzeug: Zugangscode-Hash + JSON-Block erzeugen
+data/galleries.json     Galerien: Titel, Datum, Ort, Code-Hash, Dateiliste
+fotos/<galerie-id>/     Fotos einer Galerie
 ```
 
-## Neues Event veröffentlichen
+Wichtig: Der Unterordner heißt genauso wie die `id` der Galerie,
+z. B. `fotos/sommerparty26/`.
 
-1. `admin.html` öffnen, Event-Daten eintragen, bearbeitete Bilder auswählen.
-2. „Galerie erzeugen“ → JSON kopieren → in `data/galleries.json` in die Liste `galleries` einfügen.
-3. „Vorschaubilder als ZIP“ → entpacken → alle `-thumb.jpg` nach `images/`.
-4. Die großen Bilder ebenfalls nach `images/` legen (gleiche Dateinamen wie im JSON).
-5. Ordner hochladen (Netlify Drop / Cloudflare Pages / GitHub Pages — alle kostenlos).
-6. Kunden Link + Code schicken, oder Direktlink: `.../index.html?code=DEINCODE`
+## Zwei Betriebsarten
 
-## Demo-Codes
+In `data/galleries.json` steuert der Block `quelle` das Verhalten.
 
-- `HOCKENHEIM26` → Hockenheim Trackday
-- `NACHTFAHRT26` → Nachtfahrt Festival
+### A) manuell (Standard)
 
-## Funktionen
+```json
+"quelle": { "typ": "manuell" }
+```
 
-- Zugangscode pro Event, Vergleich über SHA-256 — der Code steht nirgends im Klartext
-- Zugang bleibt beim Neuladen erhalten (Code landet als `?code=…` im Link)
-- Masonry-Raster, Lazy Loading, Lightbox mit Pfeiltasten
-- Download einzeln, ausgewählt (ZIP) und „Alle herunterladen“ (ZIP) mit Fortschrittsanzeige
-- Vollständig responsiv, Tastatur- und Screenreader-taugliche Bedienelemente
+Die Dateien stehen in der Liste `fotos` der Galerie. Volle
+Kontrolle über Reihenfolge, aber jede neue Datei muss eingetragen werden.
 
-## Grenze der Sicherheit
+### B) github (automatisch)
 
-Der Code schützt gut gegen ungewolltes Stöbern, aber bei einer statischen Seite liegen die
-Bilddateien technisch unter ihrer URL. Wer eine URL kennt, kann sie direkt öffnen.
-Für echten Serverschutz (Bilder ohne Code nicht erreichbar) wäre Supabase Storage mit
-signierten URLs der nächste Schritt — sag Bescheid, dann baue ich das darauf um.
+```json
+"quelle": {
+  "typ": "github",
+  "owner": "DEIN-GITHUB-NAME",
+  "repo": "galerie",
+  "branch": "main",
+  "fotosOrdner": "fotos"
+}
+```
+
+Die Website liest den Ordner `fotos/<id>/` selbst aus (öffentliche GitHub-API)
+und sortiert nach Dateinamen. Du lädst also nur noch hoch — `galleries.json`
+musst du nur bei einer **neuen** Galerie anfassen (Titel, Datum, Ort,
+Code-Hash). Die Liste `fotos` dient dann als Reserve, falls die API gerade
+nicht antwortet.
+
+Dateinamen mit führender Nummer bestimmen die Reihenfolge und den angezeigten
+Titel: `04-crowd-hoch.jpg` → „Crowd hoch".
+
+## Neues Event einstellen
+
+1. Bilder exportieren (JPEG, Langseite ca. 2000 px, Qualität ~85).
+2. `admin.html` öffnen, Titel/Datum/Ort/Code eintragen → Code-Hash und
+   JSON-Block kopieren, in `data/galleries.json` einfügen.
+3. Ordner `fotos/<id>/` anlegen und die Fotos hochladen.
+4. Kunden den Link mit Code schicken: `…/index.html?code=DEINCODE`
+
+## Hosting (kostenlos)
+
+| Ort | Grenze | Hinweis |
+| --- | --- | --- |
+| GitHub Pages | 100 MB pro Datei, Repo möglichst < 1 GB | Repo muss öffentlich sein; Automatikmodus B funktioniert nur hier |
+| Cloudflare Pages | 25 MB pro Datei, 20 000 Dateien | schnell, gute Wahl für viele Fotos |
+| Netlify Drop | 100 GB Traffic/Monat | Ordner einfach hineinziehen, kein Repo nötig |
+
+## Sicherheitshinweis
+
+Der Code schützt vor neugierigen Blicken, nicht gegen Fachleute: Auf einer
+statischen Seite bleiben die Dateien über ihre direkte Adresse erreichbar.
+Für echten Schutz braucht es signierte Links (z. B. Supabase Storage oder
+Cloudflare R2 mit Signatur).
