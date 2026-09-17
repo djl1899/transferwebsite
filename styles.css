@@ -388,7 +388,10 @@ code {
   .toolbar__actions { display: grid; grid-template-columns: 1fr 1fr; }
   .toolbar__actions .btn { width: 100%; }
   .card__overlay, .check { opacity: 1; }
-  .topbar__right { gap: 8px; }
+  /* Am Handy stehen Regler und Abmelden rechts oben untereinander */
+  .topbar { align-items: flex-start; }
+  .topbar__right { flex-direction: column; align-items: flex-end; gap: 9px; }
+  .topbar__right .btn { padding: 9px 16px; font-size: .88rem; }
   .lb { grid-template-columns: 42px 1fr 42px; }
   .lb__nav { font-size: 1.9rem; }
 }
