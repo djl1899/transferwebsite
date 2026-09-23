@@ -517,7 +517,7 @@ function wire() {
   }
 
   // Code aus dem Link (?code=XYZ) direkt übernehmen
-  const urlCode = ne URLSearchParams(location.search).get('code');
+  const urlCode = new URLSearchParams(location.search).get('code');
   if (urlCode) await tryUnlock(urlCode, { silent: true });
 
   if ($('app').hidden) $('codeInput').focus();
